@@ -1,11 +1,10 @@
 # Reproducible Research: Peer Assessment 1
-```{r echo=FALSE}
-options(scipen=1, digits=2)
-```
+
 
 ***
 ## Loading and preprocessing the data
-```{r}
+
+```r
 # Read csv data from local zip file.
 act = read.csv(unz("activity.zip", "activity.csv"))
 # Format the interval time to a four-digit number string.
@@ -16,7 +15,8 @@ act$date = as.Date(as.character(act$date))
 
 ***
 ## What is mean total number of steps taken per day?
-```{r totals histogram} 
+
+```r
 # Get subset of complete cases.
 act.cc = act[complete.cases(act),]
 # Sum each days total steps.
@@ -25,16 +25,22 @@ act.cc.sum = sapply(split(act.cc$steps, act.cc$date), sum)
 hist(act.cc.sum, breaks=10,
      main="Histogram of total steps per day over two months",
      xlab="Total steps per day")
+```
+
+![plot of chunk totals histogram](figure/totals histogram.png) 
+
+```r
 # Calculate the mean and median
 act.mean = mean(act.cc.sum)
 act.median = median(act.cc.sum)
 ```
-#### The *mean* and *median* total number of steps taken per day are `r act.mean` and `r act.median` respectively.
+#### The *mean* and *median* total number of steps taken per day are 10766.19 and 10765 respectively.
 
 
 ***
 ## What is the average daily activity pattern?
-```{r average5min}
+
+```r
 act.cc.ave = sapply(split(act.cc$steps, act.cc$interval), mean)
 plot(act.cc.ave, type = "l", xaxt="n", 
      main="Average number of steps\nacross two months for each five-minute interval",
@@ -48,18 +54,22 @@ abline(v=max.index, col="red", lty=2)
 text(max.index, act.cc.ave[max.index], paste0("Max: ", formatC(act.cc.ave[max.index], digits=5), " steps"), pos=4)
 ```
 
-#### The interval at `r max.xtick` contains the maximum number of steps averaged across all the days in the dataset.
+![plot of chunk average5min](figure/average5min.png) 
+
+#### The interval at 0835 contains the maximum number of steps averaged across all the days in the dataset.
 
 ***
 ## Imputing missing values
-```{r}
+
+```r
 NA.rows = is.na(act$steps)
 total.na = sum(NA.rows)
 ```
-#### There are `r total.na` missing values in the dataset.
+#### There are 2304 missing values in the dataset.
 
 #### The next bit of code replaces missing values (NA steps) with the 2-month averages found in the previous section.
-```{r}
+
+```r
 # Copy data frame to create imputed dataset.
 act.imp = act
 # Replace NA values with the interval average from the previous section.
@@ -67,26 +77,19 @@ rep.times = length(act$steps) / length(act.cc.ave)  #17568 / 288 = 61
 act.imp[NA.rows,"steps"] = rep(act.cc.ave, times=rep.times)[NA.rows]
 ```
 #### The new dataset with imputed values:
-```{r imputed_dataset, echo=FALSE}
-print(head(act.imp))
 
-
-#plot(act.cc.ave, type = "l", xaxt="n", lwd=5, col="grey",
-#     main="Average number of steps\nacross two months for each five-minute interval",
-#     ylab="Average total steps",
-#     xlab="Five-minute intervals from 0000 to 2400")
-## Place 2-hour ticks along x-axis.
-#axis(1, at=seq(0, length(act.cc.ave), by=24), labels=formatC(seq(0,2400,by=200), width=4, flag="0"), las=2)
-#
-#act.imp.ave = sapply(split(act.imp$steps, act.imp$interval), mean)
-#lines(act.imp.ave, type = "l", xaxt="n", lty=2, lwd=1, col="black")
-#
-#legend("topright", 
-#       c("Original dataset (NA values excluded)", "Imputed dataset"), 
-#       lty=c(1,2), lwd=c(5,1), col=c("grey","black"))
+```
+##   steps       date interval
+## 1 1.717 2012-10-01     0000
+## 2 0.340 2012-10-01     0005
+## 3 0.132 2012-10-01     0010
+## 4 0.151 2012-10-01     0015
+## 5 0.075 2012-10-01     0020
+## 6 2.094 2012-10-01     0025
 ```
 
-```{r Interleaved Histogram}
+
+```r
 library(ggplot2)
 # Sum each days total steps.
 act.imp.sum = sapply(split(act.imp$steps, act.imp$date), sum)
@@ -99,25 +102,40 @@ gg = ggplot(df, aes(x=ave.steps, fill=Dataset)) + geom_histogram(binwidth=2000, 
 gg = gg + ggtitle("Interleaved Histogram of Daily Totals\nfor October and November")
 gg = gg + xlab("Total steps taken each day")
 print(gg)
+```
 
+![plot of chunk Interleaved Histogram](figure/Interleaved Histogram.png) 
+
+```r
 # Calculate the mean and median
 act.imp.mean = mean(act.imp.sum)
 act.imp.median = median(act.imp.sum)
 ```
 
-#### The *mean* and *median* total number of steps taken per day remains the same after imputing the dataset. They are `r act.imp.mean` and `r act.median` respectively. 
+#### The *mean* and *median* total number of steps taken per day remains the same after imputing the dataset. They are 10766.19 and 10765 respectively. 
 #### On the otherhand, the count of the daily totals is different. Because the NA data was filled with the *daily means*, the count of the mean total is higher for the imputed dataset as seen in the graph.
 
 
 ***
 ## Are there differences in activity patterns between weekdays and weekends?
-```{r weekdays vs weekends}
+
+```r
 # Add a weekday/weekend factor column to dataset.
 days = weekdays(act.imp$date)
 weekend = c("Saturday", "Sunday")
 act.imp$week___ = factor(days %in% weekend, labels=c("weekday", "weekend"))
 str(act.imp)
+```
 
+```
+## 'data.frame':	17568 obs. of  4 variables:
+##  $ steps   : num  1.717 0.3396 0.1321 0.1509 0.0755 ...
+##  $ date    : Date, format: "2012-10-01" "2012-10-01" ...
+##  $ interval: chr  "0000" "0005" "0010" "0015" ...
+##  $ week___ : Factor w/ 2 levels "weekday","weekend": 1 1 1 1 1 1 1 1 1 1 ...
+```
+
+```r
 # Split the data into weekday and weekend groups and find 5-minute averages for each.
 split.act = split(act.imp, act.imp$week___)
 df = data.frame(sapply(split.act, function(x) sapply(split(x$steps, x$interval), mean)))
@@ -139,7 +157,8 @@ plot(df$weekend, type="l", xaxt="n",
 mtext("Weekend")
 axis(1, at=seq(0, length(act.cc.ave), by=24), labels=formatC(seq(0,2400,by=200), width=4, flag="0"), las=2)
 grid()
-
 ```
+
+![plot of chunk weekdays vs weekends](figure/weekdays vs weekends.png) 
 
 #### The plot above shows the differences in weekday and weekend activity. Both graphs peak between 8 and 10 a.m. but also shows that the individual is relatively more active through the day on weekends.
